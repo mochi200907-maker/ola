@@ -21,13 +21,13 @@
         
         .overlay-info { position: absolute; top: 15px; left: 15px; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(8px); padding: 6px 12px; border-radius: 8px; font-size: 0.85rem; font-weight: 600; z-index: 2; }
         
-        /* Device Selector Hover Overlay */
+        /* Device Menu Controls */
         .device-selector-overlay {
             position: absolute;
             bottom: 0;
             left: 0;
             right: 0;
-            background: rgba(15, 23, 42, 0.9);
+            background: rgba(15, 23, 42, 0.95);
             backdrop-filter: blur(10px);
             padding: 12px;
             display: flex;
@@ -36,10 +36,10 @@
             opacity: 0;
             pointer-events: none;
             transition: opacity 0.3s ease;
-            z-index: 3;
+            z-index: 10;
         }
 
-        /* Lalabas lang ang menu kapag in-hover ang mouse sa local video card */
+        /* Lalabas ang menu kapag tinutok ang mouse sa You screen */
         .video-card:hover .device-selector-overlay {
             opacity: 1;
             pointer-events: auto;
@@ -48,19 +48,22 @@
         .device-selector-overlay label {
             font-size: 0.75rem;
             font-weight: 600;
-            color: #94a3b8;
+            color: #38bdf8;
             text-transform: uppercase;
+            display: block;
+            margin-bottom: 3px;
         }
 
         .device-selector-overlay select {
             width: 100%;
-            padding: 6px 10px;
-            background: #334155;
+            padding: 8px;
+            background: #0f172a;
             color: white;
-            border: 1px solid #475569;
+            border: 1px solid #38bdf8;
             border-radius: 6px;
             font-size: 0.85rem;
             outline: none;
+            cursor: pointer;
         }
 
         .status-overlay { position: absolute; inset: 0; background: rgba(15, 23, 42, 0.85); display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 15px; transition: opacity 0.3s ease; }
@@ -90,12 +93,11 @@
 
     <div class="main-container">
         <div class="video-grid">
-            <!-- Local User Video -->
             <div class="video-card">
                 <video id="localVideo" autoplay playsinline muted></video>
                 <div class="overlay-info">You</div>
                 
-                <!-- Device Selectors on Hover -->
+                <!-- Hover Device Selectors -->
                 <div class="device-selector-overlay">
                     <div>
                         <label for="cameraSelect">Camera Source</label>
@@ -108,7 +110,6 @@
                 </div>
             </div>
 
-            <!-- Remote Stranger Video -->
             <div class="video-card">
                 <video id="remoteVideo" autoplay playsinline></video>
                 <div class="overlay-info" id="remoteInfo">Stranger</div>
