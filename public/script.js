@@ -5,108 +5,92 @@ const remoteVideo = document.getElementById('remoteVideo');
 const startBtn = document.getElementById('startBtn');
 const skipBtn = document.getElementById('skipBtn');
 const userCount = document.getElementById('userCount');
+const statusOverlay = document.getElementById('statusOverlay');
+const loadingSpinner = document.getElementById('loadingSpinner');
+const statusText = document.getElementById('statusText');
+const remoteInfo = document.getElementById('remoteInfo');
 
 let localStream = null;
 let peerConnection = null;
 let partnerId = null;
 
-// Palitan ang lumang rtcConfig sa script.js nito:
 const rtcConfig = {
     iceServers: [
         { urls: 'stun:stun.l.google.com:19302' },
-        {
-            urls: 'turn:openrelay.metered.ca:80',
-            username: 'openrelay',
-            credential: 'openrelay'
-        },
-        {
-            urls: 'turn:openrelay.metered.ca:443',
-            username: 'openrelay',
-            credential: 'openrelay'
-        }
+        { urls: 'turn:openrelay.metered.ca:80', username: 'openrelay', credential: 'openrelay' },
+        { urls: 'turn:openrelay.metered.ca:443', username: 'openrelay', credential: 'openrelay' }
     ]
 };
+
 async function initMedia() {
     try {
         localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
         localVideo.srcObject = localStream;
     } catch (err) {
-        console.error('Error accessing media devices:', err);
-        alert('Kailangan ng camera at microphone access para gumana ang video chat.');
+        alert('Kailangan ng camera at mic permission para gumana ang chat.');
     }
 }
-
 initMedia();
 
-socket.on('user-count', (count) => {
-    userCount.textContent = count;
-});
+socket.on('user-count', (count) => userCount.textContent = count);
 
 startBtn.addEventListener('click', () => {
-    if (!localStream) {
-        alert('Paki-payagan muna ang camera at microphone access.');
-        return;
-    }
+    if (!localStream) return alert('Paki-access muna ang camera.');
     startBtn.disabled = true;
     skipBtn.disabled = false;
+    showLoading('Looking for a stranger...');
     socket.emit('find-match');
 });
 
 skipBtn.addEventListener('click', () => {
     resetConnection();
+    showLoading('Finding new stranger...');
     socket.emit('skip');
     socket.emit('find-match');
 });
 
 socket.on('match-found', async (data) => {
     partnerId = data.partnerId;
+    remoteInfo.textContent = `Stranger (${data.partnerCountry})`;
+    showLoading('Connecting video...');
     createPeerConnection();
 
     if (data.initiator) {
-        try {
-            const offer = await peerConnection.createOffer();
-            await peerConnection.setLocalDescription(offer);
-            socket.emit('signal', { target: partnerId, signal: { type: 'offer', sdp: offer } });
-        } catch (err) {
-            console.error('Failed to create offer:', err);
-        }
+        const offer = await peerConnection.createOffer();
+        await peerConnection.setLocalDescription(offer);
+        socket.emit('signal', { target: partnerId, signal: { type: 'offer', sdp: offer } });
     }
 });
 
 socket.on('signal', async (data) => {
     if (!peerConnection) createPeerConnection();
 
-    try {
-        if (data.signal.type === 'offer') {
-            await peerConnection.setRemoteDescription(new RTCSessionDescription(data.signal.sdp));
-            const answer = await peerConnection.createAnswer();
-            await peerConnection.setLocalDescription(answer);
-            socket.emit('signal', { target: data.sender, signal: { type: 'answer', sdp: answer } });
-        } else if (data.signal.type === 'answer') {
-            await peerConnection.setRemoteDescription(new RTCSessionDescription(data.signal.sdp));
-        } else if (data.signal.candidate) {
-            await peerConnection.addIceCandidate(new RTCIceCandidate(data.signal.candidate));
-        }
-    } catch (err) {
-        console.error('Signaling error:', err);
+    if (data.signal.type === 'offer') {
+        await peerConnection.setRemoteDescription(new RTCSessionDescription(data.signal.sdp));
+        const answer = await peerConnection.createAnswer();
+        await peerConnection.setLocalDescription(answer);
+        socket.emit('signal', { target: data.sender, signal: { type: 'answer', sdp: answer } });
+    } else if (data.signal.type === 'answer') {
+        await peerConnection.setRemoteDescription(new RTCSessionDescription(data.signal.sdp));
+    } else if (data.signal.candidate) {
+        await peerConnection.addIceCandidate(new RTCIceCandidate(data.signal.candidate));
     }
 });
 
 socket.on('partner-disconnected', () => {
     resetConnection();
+    showLoading('Stranger left. Searching next...');
     socket.emit('find-match');
 });
 
 function createPeerConnection() {
     peerConnection = new RTCPeerConnection(rtcConfig);
-
-    if (localStream) {
-        localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
-    }
+    localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
 
     peerConnection.ontrack = (event) => {
         if (event.streams && event.streams[0]) {
             remoteVideo.srcObject = event.streams[0];
+            hideLoading();
         }
     };
 
@@ -124,4 +108,16 @@ function resetConnection() {
     }
     remoteVideo.srcObject = null;
     partnerId = null;
+    remoteInfo.textContent = 'Stranger';
+}
+
+function showLoading(message) {
+    statusOverlay.classList.remove('hidden');
+    loadingSpinner.classList.remove('hidden');
+    statusText.textContent = message;
+}
+
+function hideLoading() {
+    statusOverlay.classList.add('hidden');
+    loadingSpinner.classList.add('hidden');
 }
