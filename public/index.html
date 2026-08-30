@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stranger Video Chat</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; background: #121212; color: white; margin: 0; padding: 20px; }
+        .stats { font-size: 1.2rem; margin-bottom: 15px; }
+        .video-container { display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; margin-bottom: 20px; }
+        video { width: 45%; max-width: 500px; height: 350px; background: black; border-radius: 10px; object-fit: cover; border: 2px solid #333; }
+        .controls button { font-size: 1.2rem; padding: 10px 25px; margin: 0 10px; cursor: pointer; border: none; border-radius: 5px; font-weight: bold; }
+        #startBtn { background: #28a745; color: white; }
+        #skipBtn { background: #dc3545; color: white; }
+        button:disabled { background: #555 !important; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+
+    <h1>Stranger Video Chat</h1>
+    <div class="stats">Active Users: <span id="userCount">0</span></div>
+
+    <div class="video-container">
+        <video id="localVideo" autoplay playsinline muted></video>
+        <video id="remoteVideo" autoplay playsinline></video>
+    </div>
+
+    <div class="controls">
+        <button id="startBtn">Start</button>
+        <button id="skipBtn" disabled>Skip</button>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
