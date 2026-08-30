@@ -4,20 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     
-    <!-- SEO Meta Tags -->
     <title>OlaTalk - Free Random Video Chat with Strangers</title>
     <meta name="description" content="Talk to strangers instantly on OlaTalk! Free online video chat platform to meet new friends worldwide with custom camera and microphone controls.">
     <meta name="keywords" content="OlaTalk, site that can talk with stranger, random video chat, omegle alternative, free stranger chat, talk to strangers online">
     <meta name="author" content="OlaTalk">
 
-    <!-- Open Graph / Social Media Preview Tags -->
     <meta property="og:title" content="OlaTalk - Talk to Strangers Worldwide">
     <meta property="og:description" content="Connect instantly with random people globally via video chat. Safe, fast, and free!">
     <meta property="og:type" content="website">
 
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     
-    <!-- Cloudflare Turnstile Script -->
     <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 
     <style>
@@ -191,7 +188,6 @@
         <div class="badge">Online: <span id="userCount">0</span></div>
     </header>
 
-    <!-- STEP 1: Landing Page Container -->
     <div class="landing-container" id="landingSection">
         <h1>Connect with Strangers <span>Instantly</span></h1>
         <p>OlaTalk is a free online random video chat platform where you can meet interesting new friends from all over the world.</p>
@@ -205,21 +201,17 @@
             </ul>
         </div>
 
-        <!-- Cloudflare Turnstile Bot Protection Widget -->
-        <!-- Testing Site Key (Palitan ang linyang ito sa public/index.html): -->
-<div class="cf-turnstile" data-sitekey="0x4AAAAAAEiI_xc0pU3Z48ah" data-callback="onCaptchaSuccess"></div>
+        <div class="cf-turnstile" data-sitekey="0x4AAAAAAEiI_xc0pU3Z48ah" data-callback="onCaptchaSuccess"></div>
 
         <button id="enterAppBtn" class="enter-btn" disabled onclick="enterChatApp()">Enter Video Chat</button>
     </div>
 
-    <!-- STEP 2: Main Video Chat Container (Naka-hide muna) -->
     <div class="main-container hidden" id="chatSection">
         <div class="video-grid">
             <div class="video-card">
                 <video id="localVideo" autoplay playsinline muted></video>
                 <div class="overlay-info">You</div>
                 
-                <!-- Hover/Mobile Device Selectors -->
                 <div class="device-selector-overlay">
                     <div>
                         <label for="cameraSelect">Camera Source</label>
@@ -249,9 +241,20 @@
     </div>
 
     <script>
+        // Automatic na lilipat sa chat kung na-verify na ang user sa browser na ito
+        document.addEventListener("DOMContentLoaded", () => {
+            if (localStorage.getItem('isVerified') === 'true') {
+                enterChatApp();
+            }
+        });
+
         // Callback kapag na-verify ng Cloudflare Turnstile ang user
         function onCaptchaSuccess() {
-            document.getElementById('enterAppBtn').disabled = false;
+            localStorage.setItem('isVerified', 'true');
+            const enterBtn = document.getElementById('enterAppBtn');
+            if (enterBtn) {
+                enterBtn.disabled = false;
+            }
         }
 
         // Lumipat mula Landing Page patungong Video Chat Section
