@@ -13,6 +13,7 @@ const remoteInfo = document.getElementById('remoteInfo');
 let localStream = null;
 let peerConnection = null;
 let partnerId = null;
+let isSearchingOrConnected = false;
 
 const rtcConfig = {
     iceServers: [
@@ -36,13 +37,20 @@ socket.on('user-count', (count) => userCount.textContent = count);
 
 startBtn.addEventListener('click', () => {
     if (!localStream) return alert('Paki-access muna ang camera.');
-    startBtn.disabled = true;
-    skipBtn.disabled = false;
-    showLoading('Looking for a stranger...');
-    socket.emit('find-match');
+
+    if (!isSearchingOrConnected) {
+        isSearchingOrConnected = true;
+        setStartBtnState(true);
+        skipBtn.disabled = false;
+        showLoading('Looking for a stranger...');
+        socket.emit('find-match');
+    } else {
+        stopEverything();
+    }
 });
 
 skipBtn.addEventListener('click', () => {
+    if (!isSearchingOrConnected) return;
     resetConnection();
     showLoading('Finding new stranger...');
     socket.emit('skip');
@@ -78,9 +86,11 @@ socket.on('signal', async (data) => {
 });
 
 socket.on('partner-disconnected', () => {
-    resetConnection();
-    showLoading('Stranger left. Searching next...');
-    socket.emit('find-match');
+    if (isSearchingOrConnected) {
+        resetConnection();
+        showLoading('Stranger left. Searching next...');
+        socket.emit('find-match');
+    }
 });
 
 function createPeerConnection() {
@@ -111,9 +121,36 @@ function resetConnection() {
     remoteInfo.textContent = 'Stranger';
 }
 
+function stopEverything() {
+    isSearchingOrConnected = false;
+    resetConnection();
+    socket.emit('skip');
+    setStartBtnState(false);
+    skipBtn.disabled = true;
+    showStatusOverlay('Click "Start" to connect', false);
+}
+
+function setStartBtnState(isStop) {
+    if (isStop) {
+        startBtn.textContent = 'Stop Chat';
+        startBtn.classList.add('stop-mode');
+    } else {
+        startBtn.textContent = 'Start Chat';
+        startBtn.classList.remove('stop-mode');
+    }
+}
+
 function showLoading(message) {
+    showStatusOverlay(message, true);
+}
+
+function showStatusOverlay(message, showSpinner) {
     statusOverlay.classList.remove('hidden');
-    loadingSpinner.classList.remove('hidden');
+    if (showSpinner) {
+        loadingSpinner.classList.remove('hidden');
+    } else {
+        loadingSpinner.classList.add('hidden');
+    }
     statusText.textContent = message;
 }
 
