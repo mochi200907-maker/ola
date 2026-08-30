@@ -19,8 +19,50 @@
         .video-card { position: relative; width: 100%; height: 380px; background: #1e293b; border-radius: 16px; overflow: hidden; border: 2px solid #334155; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3); }
         video { width: 100%; height: 100%; object-fit: cover; }
         
-        .overlay-info { position: absolute; top: 15px; left: 15px; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(8px); padding: 6px 12px; border-radius: 8px; font-size: 0.85rem; font-weight: 600; }
+        .overlay-info { position: absolute; top: 15px; left: 15px; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(8px); padding: 6px 12px; border-radius: 8px; font-size: 0.85rem; font-weight: 600; z-index: 2; }
         
+        /* Device Selector Hover Overlay */
+        .device-selector-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(15, 23, 42, 0.9);
+            backdrop-filter: blur(10px);
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            z-index: 3;
+        }
+
+        /* Lalabas lang ang menu kapag in-hover ang mouse sa local video card */
+        .video-card:hover .device-selector-overlay {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .device-selector-overlay label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #94a3b8;
+            text-transform: uppercase;
+        }
+
+        .device-selector-overlay select {
+            width: 100%;
+            padding: 6px 10px;
+            background: #334155;
+            color: white;
+            border: 1px solid #475569;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            outline: none;
+        }
+
         .status-overlay { position: absolute; inset: 0; background: rgba(15, 23, 42, 0.85); display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 15px; transition: opacity 0.3s ease; }
         .spinner { width: 45px; height: 45px; border: 4px solid #334155; border-top-color: #38bdf8; border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
@@ -29,8 +71,6 @@
         button { padding: 14px 32px; font-size: 1rem; font-weight: 700; border: none; border-radius: 12px; cursor: pointer; transition: all 0.2s; }
         #startBtn { background: #22c55e; color: white; }
         #startBtn:hover { background: #16a34a; }
-        
-        /* Custom styling para sa Stop Chat button state */
         #startBtn.stop-mode { background: #ef4444 !important; }
         #startBtn.stop-mode:hover { background: #dc2626 !important; }
 
@@ -50,11 +90,25 @@
 
     <div class="main-container">
         <div class="video-grid">
+            <!-- Local User Video -->
             <div class="video-card">
                 <video id="localVideo" autoplay playsinline muted></video>
                 <div class="overlay-info">You</div>
+                
+                <!-- Device Selectors on Hover -->
+                <div class="device-selector-overlay">
+                    <div>
+                        <label for="cameraSelect">Camera Source</label>
+                        <select id="cameraSelect"></select>
+                    </div>
+                    <div>
+                        <label for="micSelect">Microphone Source</label>
+                        <select id="micSelect"></select>
+                    </div>
+                </div>
             </div>
 
+            <!-- Remote Stranger Video -->
             <div class="video-card">
                 <video id="remoteVideo" autoplay playsinline></video>
                 <div class="overlay-info" id="remoteInfo">Stranger</div>
