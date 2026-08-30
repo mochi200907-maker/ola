@@ -2,17 +2,11 @@ const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const path = require('path');
+const geoip = require('geoip-lite');
 
 const app = express();
 const server = http.createServer(app);
-
-// Pinapayagan ang CORS para sa deployment
-const io = new Server(server, {
-    cors: {
-        origin: "*",
-        methods: ["GET", "POST"]
-    }
-});
+const io = new Server(server, { cors: { origin: "*" } });
 
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -23,9 +17,13 @@ io.on('connection', (socket) => {
     activeUsers++;
     io.emit('user-count', activeUsers);
 
-    // Hanapan ng kausap ang user
+    // Kumuha ng IP address para sa Country Detection
+    let clientIp = socket.handshake.headers['x-forwarded-for'] || socket.handshake.address;
+    if (clientIp.includes(',')) clientIp = clientIp.split(',')[0];
+    const geo = geoip.lookup(clientIp);
+    socket.country = geo ? geo.country : 'Unknown';
+
     socket.on('find-match', () => {
-        // Linisin ang queue mula sa mga na-disconnect na socket
         waitingQueue = waitingQueue.filter(s => s.id !== socket.id && s.connected);
 
         if (waitingQueue.length > 0) {
@@ -34,8 +32,8 @@ io.on('connection', (socket) => {
             socket.partnerId = partner.id;
             partner.partnerId = socket.id;
 
-            socket.emit('match-found', { initiator: true, partnerId: partner.id });
-            partner.emit('match-found', { initiator: false, partnerId: socket.id });
+            socket.emit('match-found', { initiator: true, partnerId: partner.id, partnerCountry: partner.country });
+            partner.emit('match-found', { initiator: false, partnerId: socket.id, partnerCountry: socket.country });
         } else {
             if (!waitingQueue.some(s => s.id === socket.id)) {
                 waitingQueue.push(socket);
@@ -43,22 +41,13 @@ io.on('connection', (socket) => {
         }
     });
 
-    // WebRTC Signaling Passing
     socket.on('signal', (data) => {
         if (data.target) {
-            io.to(data.target).emit('signal', {
-                sender: socket.id,
-                signal: data.signal
-            });
+            io.to(data.target).emit('signal', { sender: socket.id, signal: data.signal });
         }
     });
 
-    // Skip Button Handler
-    socket.on('skip', () => {
-        handleDisconnect(socket);
-    });
-
-    // Disconnect Handler
+    socket.on('skip', () => handleDisconnect(socket));
     socket.on('disconnect', () => {
         activeUsers = Math.max(0, activeUsers - 1);
         io.emit('user-count', activeUsers);
@@ -66,22 +55,15 @@ io.on('connection', (socket) => {
     });
 
     function handleDisconnect(sock) {
-        // Alisin sa waiting queue kung naroroon
         waitingQueue = waitingQueue.filter(s => s.id !== sock.id);
-
-        // Sabihan ang partner na umalis na ang kausap
         if (sock.partnerId) {
             io.to(sock.partnerId).emit('partner-disconnected');
             const partnerSocket = io.sockets.sockets.get(sock.partnerId);
-            if (partnerSocket) {
-                partnerSocket.partnerId = null;
-            }
+            if (partnerSocket) partnerSocket.partnerId = null;
             sock.partnerId = null;
         }
     }
 });
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
-    console.log(`Server is running smoothly on port ${PORT}`);
-});
+server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
