@@ -10,6 +10,9 @@ const loadingSpinner = document.getElementById('loadingSpinner');
 const statusText = document.getElementById('statusText');
 const remoteInfo = document.getElementById('remoteInfo');
 
+const cameraSelect = document.getElementById('cameraSelect');
+const micSelect = document.getElementById('micSelect');
+
 let localStream = null;
 let peerConnection = null;
 let partnerId = null;
@@ -23,15 +26,79 @@ const rtcConfig = {
     ]
 };
 
+// Inisyal na pagkuha ng camera at microphone access
 async function initMedia() {
     try {
         localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
         localVideo.srcObject = localStream;
+        await populateDeviceList();
     } catch (err) {
         alert('Kailangan ng camera at mic permission para gumana ang chat.');
     }
 }
+
+// Kunin ang mga available na devices (OBS, Virtual Cams, Mics)
+async function populateDeviceList() {
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    
+    cameraSelect.innerHTML = '';
+    micSelect.innerHTML = '';
+
+    devices.forEach(device => {
+        const option = document.createElement('option');
+        option.value = device.deviceId;
+
+        if (device.kind === 'videoinput') {
+            option.text = device.label || `Camera ${cameraSelect.length + 1}`;
+            cameraSelect.appendChild(option);
+        } else if (device.kind === 'audioinput') {
+            option.text = device.label || `Microphone ${micSelect.length + 1}`;
+            micSelect.appendChild(option);
+        }
+    });
+}
+
 initMedia();
+
+// Baguhin ang Media Stream kapag pinalitan ang napiling Camera o Mic
+cameraSelect.addEventListener('change', updateLocalStream);
+micSelect.addEventListener('change', updateLocalStream);
+
+async function updateLocalStream() {
+    const videoDeviceId = cameraSelect.value;
+    const audioDeviceId = micSelect.value;
+
+    const constraints = {
+        video: videoDeviceId ? { deviceId: { exact: videoDeviceId } } : true,
+        audio: audioDeviceId ? { deviceId: { exact: audioDeviceId } } : true
+    };
+
+    try {
+        const newStream = await navigator.mediaDevices.getUserMedia(constraints);
+        
+        // Palitan ang lumang local stream
+        if (localStream) {
+            localStream.getTracks().forEach(track => track.stop());
+        }
+        localStream = newStream;
+        localVideo.srcObject = localStream;
+
+        // Kung kasalukuyang nakakonekta sa stranger, palitan ang live track sa WebRTC
+        if (peerConnection) {
+            const videoTrack = localStream.getVideoTracks()[0];
+            const audioTrack = localStream.getAudioTracks()[0];
+
+            const senders = peerConnection.getSenders();
+            const videoSender = senders.find(s => s.track && s.track.kind === 'video');
+            const audioSender = senders.find(s => s.track && s.track.kind === 'audio');
+
+            if (videoSender && videoTrack) videoSender.replaceTrack(videoTrack);
+            if (audioSender && audioTrack) audioSender.replaceTrack(audioTrack);
+        }
+    } catch (err) {
+        console.error('Error switching devices:', err);
+    }
+}
 
 socket.on('user-count', (count) => userCount.textContent = count);
 
