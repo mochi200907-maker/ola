@@ -3,31 +3,67 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Stranger Video Chat</title>
+    <title>Global Stranger Chat</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: Arial, sans-serif; text-align: center; background: #121212; color: white; margin: 0; padding: 20px; }
-        .stats { font-size: 1.2rem; margin-bottom: 15px; }
-        .video-container { display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; margin-bottom: 20px; }
-        video { width: 45%; max-width: 500px; height: 350px; background: black; border-radius: 10px; object-fit: cover; border: 2px solid #333; }
-        .controls button { font-size: 1.2rem; padding: 10px 25px; margin: 0 10px; cursor: pointer; border: none; border-radius: 5px; font-weight: bold; }
-        #startBtn { background: #28a745; color: white; }
-        #skipBtn { background: #dc3545; color: white; }
-        button:disabled { background: #555 !important; cursor: not-allowed; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+        body { background: #0f172a; color: #f8fafc; display: flex; flex-direction: column; min-height: 100vh; }
+        
+        header { background: #1e293b; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155; }
+        .logo { font-size: 1.5rem; font-weight: 700; color: #38bdf8; }
+        .badge { background: #0284c7; padding: 6px 14px; border-radius: 20px; font-size: 0.9rem; font-weight: 600; }
+
+        .main-container { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; gap: 20px; }
+        .video-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; width: 100%; max-width: 1000px; }
+        
+        .video-card { position: relative; width: 100%; height: 380px; background: #1e293b; border-radius: 16px; overflow: hidden; border: 2px solid #334155; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3); }
+        video { width: 100%; height: 100%; object-fit: cover; }
+        
+        .overlay-info { position: absolute; top: 15px; left: 15px; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(8px); padding: 6px 12px; border-radius: 8px; font-size: 0.85rem; font-weight: 600; }
+        
+        .status-overlay { position: absolute; inset: 0; background: rgba(15, 23, 42, 0.85); display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 15px; transition: opacity 0.3s ease; }
+        .spinner { width: 45px; height: 45px; border: 4px solid #334155; border-top-color: #38bdf8; border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .controls { display: flex; gap: 15px; }
+        button { padding: 14px 32px; font-size: 1rem; font-weight: 700; border: none; border-radius: 12px; cursor: pointer; transition: all 0.2s; }
+        #startBtn { background: #22c55e; color: white; }
+        #startBtn:hover { background: #16a34a; }
+        #skipBtn { background: #ef4444; color: white; }
+        #skipBtn:hover { background: #dc2626; }
+        button:disabled { background: #475569 !important; opacity: 0.6; cursor: not-allowed; }
+        
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
-    <h1>Stranger Video Chat</h1>
-    <div class="stats">Active Users: <span id="userCount">0</span></div>
+    <header>
+        <div class="logo">OmeTalk</div>
+        <div class="badge">Online: <span id="userCount">0</span></div>
+    </header>
 
-    <div class="video-container">
-        <video id="localVideo" autoplay playsinline muted></video>
-        <video id="remoteVideo" autoplay playsinline></video>
-    </div>
+    <div class="main-container">
+        <div class="video-grid">
+            <div class="video-card">
+                <video id="localVideo" autoplay playsinline muted></video>
+                <div class="overlay-info">You</div>
+            </div>
 
-    <div class="controls">
-        <button id="startBtn">Start</button>
-        <button id="skipBtn" disabled>Skip</button>
+            <div class="video-card">
+                <video id="remoteVideo" autoplay playsinline></video>
+                <div class="overlay-info" id="remoteInfo">Stranger</div>
+                <div class="status-overlay" id="statusOverlay">
+                    <div class="spinner hidden" id="loadingSpinner"></div>
+                    <span id="statusText">Click "Start" to connect</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button id="startBtn">Start Chat</button>
+            <button id="skipBtn" disabled>Skip / Next</button>
+        </div>
     </div>
 
     <script src="/socket.io/socket.io.js"></script>
