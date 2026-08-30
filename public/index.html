@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     
     <!-- SEO Meta Tags -->
     <title>OlaTalk - Free Random Video Chat with Strangers</title>
@@ -18,19 +18,37 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
-        body { background: #0f172a; color: #f8fafc; display: flex; flex-direction: column; min-height: 100vh; }
+        body { background: #0f172a; color: #f8fafc; display: flex; flex-direction: column; min-height: 100vh; min-height: 100dvh; }
         
-        header { background: #1e293b; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155; }
-        .logo { font-size: 1.5rem; font-weight: 700; color: #38bdf8; }
-        .badge { background: #0284c7; padding: 6px 14px; border-radius: 20px; font-size: 0.9rem; font-weight: 600; }
+        header { background: #1e293b; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155; }
+        .logo { font-size: 1.3rem; font-weight: 700; color: #38bdf8; }
+        .badge { background: #0284c7; padding: 5px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; }
 
-        .main-container { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; gap: 20px; }
-        .video-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; width: 100%; max-width: 1000px; }
+        .main-container { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 15px; gap: 15px; width: 100%; }
         
-        .video-card { position: relative; width: 100%; height: 380px; background: #1e293b; border-radius: 16px; overflow: hidden; border: 2px solid #334155; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3); }
+        /* Desktop Grid */
+        .video-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); 
+            gap: 15px; 
+            width: 100%; 
+            max-width: 1000px; 
+        }
+        
+        .video-card { 
+            position: relative; 
+            width: 100%; 
+            height: 380px; 
+            background: #1e293b; 
+            border-radius: 16px; 
+            overflow: hidden; 
+            border: 2px solid #334155; 
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3); 
+        }
+        
         video { width: 100%; height: 100%; object-fit: cover; }
         
-        .overlay-info { position: absolute; top: 15px; left: 15px; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(8px); padding: 6px 12px; border-radius: 8px; font-size: 0.85rem; font-weight: 600; z-index: 2; }
+        .overlay-info { position: absolute; top: 12px; left: 12px; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(8px); padding: 5px 10px; border-radius: 8px; font-size: 0.8rem; font-weight: 600; z-index: 2; }
         
         /* Device Menu Controls */
         .device-selector-overlay {
@@ -40,49 +58,48 @@
             right: 0;
             background: rgba(15, 23, 42, 0.95);
             backdrop-filter: blur(10px);
-            padding: 12px;
+            padding: 10px;
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 6px;
             opacity: 0;
             pointer-events: none;
             transition: opacity 0.3s ease;
             z-index: 10;
         }
 
-        /* Lalabas ang menu kapag tinutok ang mouse sa You screen */
         .video-card:hover .device-selector-overlay {
             opacity: 1;
             pointer-events: auto;
         }
 
         .device-selector-overlay label {
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             font-weight: 600;
             color: #38bdf8;
             text-transform: uppercase;
             display: block;
-            margin-bottom: 3px;
+            margin-bottom: 2px;
         }
 
         .device-selector-overlay select {
             width: 100%;
-            padding: 8px;
+            padding: 6px;
             background: #0f172a;
             color: white;
             border: 1px solid #38bdf8;
             border-radius: 6px;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             outline: none;
             cursor: pointer;
         }
 
-        .status-overlay { position: absolute; inset: 0; background: rgba(15, 23, 42, 0.85); display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 15px; transition: opacity 0.3s ease; }
-        .spinner { width: 45px; height: 45px; border: 4px solid #334155; border-top-color: #38bdf8; border-radius: 50%; animation: spin 1s linear infinite; }
+        .status-overlay { position: absolute; inset: 0; background: rgba(15, 23, 42, 0.85); display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 12px; transition: opacity 0.3s ease; text-align: center; padding: 10px; }
+        .spinner { width: 40px; height: 40px; border: 4px solid #334155; border-top-color: #38bdf8; border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        .controls { display: flex; gap: 15px; }
-        button { padding: 14px 32px; font-size: 1rem; font-weight: 700; border: none; border-radius: 12px; cursor: pointer; transition: all 0.2s; }
+        .controls { display: flex; gap: 10px; width: 100%; max-width: 400px; }
+        button { flex: 1; padding: 14px; font-size: 1rem; font-weight: 700; border: none; border-radius: 12px; cursor: pointer; transition: all 0.2s; }
         #startBtn { background: #22c55e; color: white; }
         #startBtn:hover { background: #16a34a; }
         #startBtn.stop-mode { background: #ef4444 !important; }
@@ -93,6 +110,39 @@
         button:disabled { background: #475569 !important; opacity: 0.6; cursor: not-allowed; }
         
         .hidden { display: none !important; }
+
+        /* Mobile Adjustments (Phones) */
+        @media (max-width: 768px) {
+            header { padding: 10px 15px; }
+            .logo { font-size: 1.1rem; }
+            .badge { font-size: 0.75rem; padding: 4px 10px; }
+
+            .main-container { padding: 10px; gap: 10px; }
+            
+            .video-grid { 
+                grid-template-columns: 1fr; 
+                height: 100%; 
+                flex: 1; 
+                gap: 10px; 
+            }
+
+            .video-card { 
+                height: 220px; 
+                border-radius: 12px; 
+            }
+
+            /* Sa mobile screen, laging lalabas ang selectors kapag pinalitan para madaling i-tap */
+            .device-selector-overlay {
+                opacity: 0.85;
+                pointer-events: auto;
+                padding: 6px;
+            }
+
+            button {
+                padding: 12px;
+                font-size: 0.95rem;
+            }
+        }
     </style>
 </head>
 <body>
@@ -108,7 +158,7 @@
                 <video id="localVideo" autoplay playsinline muted></video>
                 <div class="overlay-info">You</div>
                 
-                <!-- Hover Device Selectors -->
+                <!-- Hover/Mobile Device Selectors -->
                 <div class="device-selector-overlay">
                     <div>
                         <label for="cameraSelect">Camera Source</label>
