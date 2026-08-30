@@ -5,60 +5,71 @@ const path = require('path');
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server);
+
+// Pinapayagan ang CORS para sa deployment
+const io = new Server(server, {
+    cors: {
+        origin: "*",
+        methods: ["GET", "POST"]
+    }
+});
 
 app.use(express.static(path.join(__dirname, 'public')));
 
 let activeUsers = 0;
-let waitingUser = null;
+let waitingQueue = [];
 
 io.on('connection', (socket) => {
     activeUsers++;
     io.emit('user-count', activeUsers);
 
-    // Kapag nag-click ng Start ang user
+    // Hanapan ng kausap ang user
     socket.on('find-match', () => {
-        if (waitingUser && waitingUser.id !== socket.id) {
-            // May naghihintay na partner! Ikonekta silang dalawa.
-            const partner = waitingUser;
-            waitingUser = null;
+        // Linisin ang queue mula sa mga na-disconnect na socket
+        waitingQueue = waitingQueue.filter(s => s.id !== socket.id && s.connected);
+
+        if (waitingQueue.length > 0) {
+            const partner = waitingQueue.shift();
 
             socket.partnerId = partner.id;
             partner.partnerId = socket.id;
 
-            // Sabihan ang initiator na magsimula ng offer
             socket.emit('match-found', { initiator: true, partnerId: partner.id });
             partner.emit('match-found', { initiator: false, partnerId: socket.id });
         } else {
-            // Walang partner, ilagay ang user sa waiting area
-            waitingUser = socket;
+            if (!waitingQueue.some(s => s.id === socket.id)) {
+                waitingQueue.push(socket);
+            }
         }
     });
 
-    // WebRTC Signaling Events
+    // WebRTC Signaling Passing
     socket.on('signal', (data) => {
-        io.to(data.target).emit('signal', {
-            sender: socket.id,
-            signal: data.signal
-        });
+        if (data.target) {
+            io.to(data.target).emit('signal', {
+                sender: socket.id,
+                signal: data.signal
+            });
+        }
     });
 
-    // Kapag nag-skip ang user
+    // Skip Button Handler
     socket.on('skip', () => {
         handleDisconnect(socket);
     });
 
-    // Kapag nag-disconnect o nagsara ng tab
+    // Disconnect Handler
     socket.on('disconnect', () => {
-        activeUsers--;
+        activeUsers = Math.max(0, activeUsers - 1);
         io.emit('user-count', activeUsers);
         handleDisconnect(socket);
     });
 
     function handleDisconnect(sock) {
-        if (waitingUser && waitingUser.id === sock.id) {
-            waitingUser = null;
-        }
+        // Alisin sa waiting queue kung naroroon
+        waitingQueue = waitingQueue.filter(s => s.id !== sock.id);
+
+        // Sabihan ang partner na umalis na ang kausap
         if (sock.partnerId) {
             io.to(sock.partnerId).emit('partner-disconnected');
             const partnerSocket = io.sockets.sockets.get(sock.partnerId);
@@ -72,5 +83,5 @@ io.on('connection', (socket) => {
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`);
+    console.log(`Server is running smoothly on port ${PORT}`);
 });
